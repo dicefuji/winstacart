@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeft, MapPin, Clock, Tag, DollarSign, MessageSquare, CheckCircle2 } from 'lucide-react'
@@ -21,10 +21,10 @@ import { DeliveryTimeSlot } from '@/lib/types'
 
 const tipOptions = [
   { value: 0, label: 'None' },
-  { value: 2, label: '$2' },
-  { value: 5, label: '$5' },
-  { value: 10, label: '$10' },
-  { value: 15, label: '$15' },
+  { value: 200, label: '$2' },
+  { value: 500, label: '$5' },
+  { value: 1000, label: '$10' },
+  { value: 1500, label: '$15' },
 ]
 
 export default function CheckoutPage() {
@@ -63,8 +63,8 @@ export default function CheckoutPage() {
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null)
 
   const store = activeStoreId ? getStoreById(activeStoreId) : null
-  const deliverySlots = getDeliveryTimeSlots()
-  const total = getTotal() + deliveryTip
+  const deliverySlots = useMemo(() => getDeliveryTimeSlots(), [])
+  const total = getTotal()
 
   const handleApplyPromo = () => {
     setPromoError('')
@@ -295,7 +295,7 @@ export default function CheckoutPage() {
                     value={customTip}
                     onChange={(e) => {
                       setCustomTip(e.target.value)
-                      setTip(parseFloat(e.target.value) || 0)
+                      setTip(Math.round((parseFloat(e.target.value) || 0) * 100))
                     }}
                     placeholder="0.00"
                     className="pl-7"

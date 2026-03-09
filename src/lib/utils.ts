@@ -39,14 +39,17 @@ export function getDeliveryTimeSlots(): { id: string; label: string; date: strin
       { start: '8:00 PM', end: '10:00 PM' },
     ]
     
-    for (const window of timeWindows) {
+    for (let i = 0; i < timeWindows.length; i++) {
+      const window = timeWindows[i]
       const slotId = `${dayOffset}-${window.start.replace(/[: ]/g, '')}`
+      // Deterministic availability based on day and slot index
+      const hash = (dayOffset * 7 + i * 13 + 3) % 10
       slots.push({
         id: slotId,
         label: `${window.start} - ${window.end}`,
         date: dateStr,
-        available: Math.random() > 0.2,
-        fee: dayOffset === 0 && timeWindows.indexOf(window) === 0 ? 199 : 0,
+        available: hash > 1, // ~80% available, deterministic
+        fee: dayOffset === 0 && i === 0 ? 199 : 0,
       })
     }
   }
