@@ -1,0 +1,29 @@
+'use client'
+
+import React from 'react'
+import { ArrowRight } from 'lucide-react'
+import { products } from '@/data/products'
+import ProductCard from '@/components/product/ProductCard'
+
+export default function PopularItems() {
+  const popularProducts = products.filter(p => p.tags.includes('popular')).slice(0, 8)
+
+  return (
+    <section className="mt-10">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Popular Near You</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Trending items in your area</p>
+        </div>
+        <button className="flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-700">
+          Show all <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {popularProducts.map((product, i) => (
+          <ProductCard key={product.id} product={product} index={i} />
+        ))}
+      </div>
+    </section>
+  )
+}
