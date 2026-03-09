@@ -15,9 +15,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useCartStore } from '@/stores/cartStore'
 import { useAddressStore } from '@/stores/addressStore'
 import { useOrdersStore } from '@/stores/ordersStore'
+import { usePaymentStateStore } from '@/stores/paymentStateStore'
 import { formatPrice, getDeliveryTimeSlots } from '@/lib/utils'
 import { getStoreById } from '@/data/stores'
 import { DeliveryTimeSlot } from '@/lib/types'
+import ChargeClarity from '@/components/checkout/ChargeClarity'
 
 const tipOptions = [
   { value: 0, label: 'None' },
@@ -54,6 +56,8 @@ export default function CheckoutPage() {
   const selectAddress = useAddressStore(s => s.selectAddress)
 
   const placeOrder = useOrdersStore(s => s.placeOrder)
+  const orders = useOrdersStore(s => s.orders)
+  const initPaymentState = usePaymentStateStore(s => s.initPaymentState)
 
   const [customTip, setCustomTip] = useState('')
   const [showCustomTip, setShowCustomTip] = useState(false)
@@ -99,6 +103,10 @@ export default function CheckoutPage() {
         promoDiscount: getPromoDiscount(),
         total,
       })
+
+      // Initialize payment state for charge clarity
+      const isFirstOrder = orders.length === 0
+      initPaymentState(orderId, total, items.length, isFirstOrder)
 
       setPlacedOrderId(orderId)
       setOrderPlaced(true)
@@ -395,9 +403,21 @@ export default function CheckoutPage() {
               )}
               <Separator />
               <div className="flex justify-between text-base font-bold">
-                <span>Total</span>
+                <span>Estimated total</span>
                 <span>{formatPrice(total)}</span>
               </div>
+            </div>
+
+            {/* Charge Clarity Module */}
+            <div className="mt-4">
+              <ChargeClarity
+                estimatedTotal={total}
+                subtotal={getSubtotal()}
+                deliveryFee={getDeliveryFee()}
+                serviceFee={getServiceFee()}
+                tip={deliveryTip}
+                promoDiscount={getPromoDiscount()}
+              />
             </div>
 
             <Button

@@ -3,13 +3,14 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingCart, MapPin, ChevronDown, Heart, Clock, Menu, X } from 'lucide-react'
+import { Search, ShoppingCart, MapPin, ChevronDown, Heart, Clock, Menu, X, Headphones } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useCartStore } from '@/stores/cartStore'
 import { useAddressStore } from '@/stores/addressStore'
+import NotificationPanel from '@/components/layout/NotificationPanel'
 
 export default function Header() {
   const router = useRouter()
@@ -120,6 +121,12 @@ export default function Header() {
                 <Clock className="h-5 w-5" />
               </Button>
             </Link>
+            <Link href="/support">
+              <Button variant="ghost" size="icon" className="hidden sm:flex text-gray-600">
+                <Headphones className="h-5 w-5" />
+              </Button>
+            </Link>
+            <NotificationPanel />
             <Button
               variant="ghost"
               size="icon"
@@ -219,6 +226,9 @@ export default function Header() {
               </Link>
               <Link href="/orders" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg">
                 <Clock className="h-5 w-5" /> <span>Orders</span>
+              </Link>
+              <Link href="/support" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg">
+                <Headphones className="h-5 w-5" /> <span>Support</span>
               </Link>
             </nav>
           </motion.div>

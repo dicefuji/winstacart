@@ -10,7 +10,11 @@ import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useOrdersStore } from '@/stores/ordersStore'
+import { usePaymentStateStore } from '@/stores/paymentStateStore'
 import { formatPrice } from '@/lib/utils'
+import PaymentStateCard from '@/components/order/PaymentStateCard'
+import DeltaExplainer from '@/components/order/DeltaExplainer'
+import { AuthorizationStatus } from '@/lib/charge-clarity-types'
 
 const OrderMap = dynamic(() => import('@/components/order/OrderMap'), { ssr: false })
 
@@ -29,6 +33,10 @@ export default function OrderTrackingPage() {
   const order = useOrdersStore(s => s.getOrderById(orderId))
   const updateOrderStatus = useOrdersStore(s => s.updateOrderStatus)
   const updateTrackingProgress = useOrdersStore(s => s.updateTrackingProgress)
+  const paymentState = usePaymentStateStore(s => s.getPaymentState(orderId))
+  const advanceAuthorizationStatus = usePaymentStateStore(s => s.advanceAuthorizationStatus)
+  const lockFinalTotal = usePaymentStateStore(s => s.lockFinalTotal)
+  const releaseHold = usePaymentStateStore(s => s.releaseHold)
 
   // Simulate order progress
   useEffect(() => {
@@ -52,6 +60,31 @@ export default function OrderTrackingPage() {
 
     return () => clearInterval(timer)
   }, [order, orderId, updateOrderStatus, updateTrackingProgress])
+
+  // Sync payment state with order status
+  useEffect(() => {
+    if (!order || !paymentState) return
+
+    const statusToAuth: Record<string, AuthorizationStatus> = {
+      placed: 'placed',
+      confirmed: 'placed',
+      shopping: 'shopping',
+      checkout: 'shopping',
+      delivering: 'final_locked',
+      delivered: 'settled',
+    }
+
+    const expectedAuth = statusToAuth[order.status]
+    if (expectedAuth && expectedAuth !== paymentState.authorizationStatus) {
+      if (expectedAuth === 'final_locked') {
+        lockFinalTotal(orderId)
+      } else if (expectedAuth === 'settled') {
+        releaseHold(orderId)
+      } else {
+        advanceAuthorizationStatus(orderId, expectedAuth)
+      }
+    }
+  }, [order, orderId, paymentState, advanceAuthorizationStatus, lockFinalTotal, releaseHold])
 
   if (!order) {
     return (
@@ -206,6 +239,9 @@ export default function OrderTrackingPage() {
         </div>
       </motion.div>
 
+      {/* Payment State Card */}
+      {paymentState && <PaymentStateCard paymentState={paymentState} />}
+
       {/* Order Details */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -300,11 +336,14 @@ export default function OrderTrackingPage() {
           )}
           <Separator className="my-2" />
           <div className="flex justify-between font-bold text-base">
-            <span>Total</span>
-            <span>{formatPrice(order.total)}</span>
+            <span>{paymentState?.finalTotalLocked ? 'Final charge' : 'Estimated total'}</span>
+            <span>{formatPrice(paymentState?.finalTotalLocked ? (paymentState.finalTotal) : order.total)}</span>
           </div>
         </div>
       </motion.div>
+
+      {/* Delta Explainer — shows only when final differs from estimate */}
+      {paymentState && <DeltaExplainer paymentState={paymentState} />}
     </div>
   )
 }
